@@ -1,0 +1,366 @@
+hello
+  world<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boolean Search Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column of four index-card steps with catalog tabs; each concept keeps its color from keyword pick through the final search boxes */
+:root{
+  --paper:#f3f6fb; --card:#ffffff; --ink:#14213d; --muted:#56627d; --line:#d6deeb; --soft:#eaeff7;
+  --accent:#2350c8; --accent-ink:#ffffff;
+  --c1:#2350c8; --c1bg:#e5ecfc; --c2:#c2410c; --c2bg:#fdece1; --c3:#0d7650; --c3bg:#def3ea;
+  --c4:#8a2cb8; --c4bg:#f2e6fa; --c5:#9a6206; --c5bg:#faf0d9;
+  --warn:#8f5200; --warnbg:#fff3d6;
+  --display:'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --body:'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
+  --mono:'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0e1422; --card:#161f33; --ink:#e7ecf6; --muted:#9ba7bf; --line:#2a3550; --soft:#1d2840;
+  --accent:#8fb0ff; --accent-ink:#0e1422;
+  --c1:#8fb0ff; --c1bg:#1c2a4c; --c2:#ff9e6b; --c2bg:#3a2317; --c3:#62d3a3; --c3bg:#133328;
+  --c4:#d49cf3; --c4bg:#2e1c3d; --c5:#efbf62; --c5bg:#33290f;
+  --warn:#efbf62; --warnbg:#33290f; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#0e1422; --card:#161f33; --ink:#e7ecf6; --muted:#9ba7bf; --line:#2a3550; --soft:#1d2840;
+  --accent:#8fb0ff; --accent-ink:#0e1422;
+  --c1:#8fb0ff; --c1bg:#1c2a4c; --c2:#ff9e6b; --c2bg:#3a2317; --c3:#62d3a3; --c3bg:#133328;
+  --c4:#d49cf3; --c4bg:#2e1c3d; --c5:#efbf62; --c5bg:#33290f;
+  --warn:#efbf62; --warnbg:#33290f; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:28px 56px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,5vw,40px);font-weight:800;letter-spacing:-.01em}
+.intro{display:flex;flex-direction:column;gap:10px}
+.intro p{margin:0;color:var(--muted);max-width:62ch}
+.example{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:var(--warnbg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:15px}
+.example b{color:var(--ink)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:7px 14px;font-weight:700;font-size:15px}
+.btn:hover{border-color:var(--accent)}
+
+.step{position:relative;background:var(--card);border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:22px clamp(16px,4vw,28px) 24px;display:flex;flex-direction:column;gap:16px;margin-top:18px}
+.tab{position:absolute;top:-30px;left:-1px;background:var(--card);border:1px solid var(--line);border-bottom:none;border-radius:10px 10px 0 0;padding:5px 16px 4px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.step h2{font-size:22px}
+.hint{margin:0;color:var(--muted);font-size:15px;max-width:65ch}
+textarea{width:100%;min-height:76px;resize:vertical;font:inherit;font-size:18px;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px}
+input[type=text]{font:inherit;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:8px;padding:7px 12px;min-width:0;flex:1}
+
+.tokens{display:flex;flex-wrap:wrap;align-items:center;gap:8px 4px;font-size:19px}
+.tok{border:1.5px dashed transparent;background:var(--soft);border-radius:8px;padding:4px 10px}
+.tok:hover{border-color:var(--muted)}
+.tok.stop{background:transparent;color:var(--muted);opacity:.75}
+.tok.sel{background:var(--cbg);color:var(--c);border:1.5px solid var(--c);font-weight:700}
+.link{border:1.5px solid var(--line);background:var(--card);border-radius:999px;width:26px;height:26px;font-size:14px;line-height:1;padding:0;color:var(--muted)}
+.link.on{background:var(--c);border-color:var(--c);color:var(--card)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--cbg);color:var(--c);border:1.5px solid var(--c);border-radius:999px;padding:3px 6px 3px 12px;font-weight:700}
+.chip button{border:none;background:transparent;color:inherit;padding:0 6px;font-size:16px}
+.note{font-size:14px;color:var(--warn);background:var(--warnbg);border-radius:8px;padding:8px 12px;margin:0}
+
+.concepts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px}
+.concept{border:1.5px solid var(--c);border-radius:12px;background:var(--card);display:flex;flex-direction:column;min-width:0}
+.concept header{background:var(--cbg);color:var(--c);padding:10px 14px;border-radius:10px 10px 0 0;display:flex;align-items:baseline;gap:10px}
+.concept header h3{font-size:19px;flex:1;min-width:0;overflow-wrap:anywhere}
+.concept header span{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.terms{list-style:none;margin:0;padding:8px 14px;display:flex;flex-direction:column}
+.term{display:flex;flex-direction:column;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}
+.term:last-child{border-bottom:none}
+.trow{display:flex;align-items:center;gap:6px}
+.tt{font-family:var(--mono);font-size:15px;flex:1;min-width:0;overflow-wrap:anywhere}
+.tt .star{color:var(--c);font-weight:700}
+.tt.covered{color:var(--muted);text-decoration:line-through}
+.ico{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:2px 8px;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}
+.ico:hover,.ico.on{border-color:var(--c);color:var(--c)}
+.tag{font-size:12.5px;color:var(--muted)}
+.letters{display:flex;flex-wrap:wrap;gap:3px;font-family:var(--mono)}
+.letters button{border:1px solid var(--line);background:var(--paper);border-radius:4px;min-width:26px;height:32px;padding:0 4px;font-size:15px}
+.letters button.kept{background:var(--cbg);border-color:var(--c);color:var(--c);font-weight:700}
+.letters button.cutpt{box-shadow:inset -4px 0 0 var(--c)}
+.letters button:disabled{opacity:.45;cursor:default}
+.letters .gap{width:10px}
+.trhelp{font-size:13.5px;color:var(--muted);margin:0}
+.add{display:flex;gap:6px;padding:0 14px 14px}
+.add .btn{padding:6px 12px}
+.prompts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:8px 16px;font-size:14px;color:var(--muted);margin:0;padding:0;list-style:none}
+.prompts b{color:var(--ink)}
+
+.stat{font-size:14px;color:var(--muted)}
+.boxes{display:flex;flex-direction:column;gap:6px}
+.box{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;border:1.5px solid var(--line);border-left:5px solid var(--c);border-radius:8px;padding:8px 10px;background:var(--card)}
+.box .lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.box code{font-family:var(--mono);font-size:14px;overflow-wrap:anywhere;min-width:0}
+.andsep{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--muted);padding-left:12px}
+details{border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:700;font-family:var(--display);font-size:17px}
+.cheat{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin-top:12px;font-size:15px}
+.cheat code{font-family:var(--mono);background:var(--soft);border-radius:4px;padding:1px 6px;font-weight:600;white-space:nowrap}
+.fix{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;margin-top:12px}
+.fix div{background:var(--soft);border-radius:10px;padding:12px 14px;font-size:15px}
+.fix h4{margin:0 0 4px;font-family:var(--display);font-size:16px}
+.fix ul{margin:0;padding-left:18px}
+.empty{color:var(--muted);font-style:italic;margin:0}
+h3.sub{font-size:16px}
+@media (prefers-reduced-motion: no-preference){ .tok,.link,.chip{transition:background .15s,border-color .15s,color .15s} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="intro">
+    <h1>Boolean Search Builder</h1>
+    <p>Turn your research question into search terms you can paste into the Advanced Search of any library database. Work through the four cards in order.</p>
+    <div class="example" id="exBanner" hidden>
+      <span><b>Example loaded.</b> Look around, then clear it and type your own question.</span>
+      <button class="btn" id="clearEx" type="button">Clear and start my own</button>
+    </div>
+  </div>
+
+  <section class="step">
+    <div class="tab">Step 1</div>
+    <h2>Write your research question</h2>
+    <p class="hint">Write it as a full question. Be as specific as you can about who, what, and where.</p>
+    <textarea id="q" placeholder="Example: How does social media use affect sleep quality in teenagers?"></textarea>
+  </section>
+
+  <section class="step">
+    <div class="tab">Step 2</div>
+    <h2>Pick the main keywords</h2>
+    <p class="hint">Tap the words that carry the meaning of your question. Grey words are question words (how, does, affect) that databases don't need. If two picked words belong together, tap the <b>+</b> between them to make a phrase.</p>
+    <div class="tokens" id="tokens"></div>
+    <div class="row">
+      <input type="text" id="newConcept" placeholder="Missing one? Add a keyword or phrase">
+      <button class="btn" id="addConceptBtn" type="button">Add keyword</button>
+    </div>
+    <div id="pickedWrap"></div>
+  </section>
+
+  <section class="step">
+    <div class="tab">Step 3</div>
+    <h2>Build a keyword bank</h2>
+    <p class="hint">Authors don't all use the same words. Add synonyms and related terms for each keyword. Then use <b>Truncate</b> to search every ending of a word at once.</p>
+    <ul class="prompts">
+      <li><b>Formal vs. everyday:</b> adolescents / teens</li>
+      <li><b>Specific examples:</b> social media / TikTok</li>
+      <li><b>Spelling variants:</b> behavior / behaviour</li>
+      <li><b>Related problems:</b> sleep / insomnia</li>
+    </ul>
+    <div class="concepts" id="concepts"></div>
+  </section>
+
+  <section class="step">
+    <div class="tab">Step 4</div>
+    <h2>Build your advanced search</h2>
+    <p class="hint">Open the database's <b>Advanced Search</b> and put each concept in its own search box. <b>OR</b> joins the synonyms inside a box, which makes your results bigger. Leave the dropdown between boxes set to <b>AND</b>, which narrows results to sources that mention every concept.</p>
+    <div class="boxes" id="boxes"></div>
+    <span class="stat" id="stat"></span>
+
+    <h3 class="sub">Leave something out (optional)</h3>
+    <p class="hint">Add words with <b>NOT</b> to remove off-topic results, like <i>adults</i>. They go in their own box with the dropdown set to NOT. Use it sparingly, since it can remove good sources too.</p>
+    <div class="row">
+      <input type="text" id="newNot" placeholder="Word to exclude">
+      <button class="btn" id="addNot" type="button">Add NOT</button>
+    </div>
+    <div class="chips" id="nots"></div>
+
+    <details>
+      <summary>Symbol cheat sheet</summary>
+      <div class="cheat">
+        <code>teen*</code><span>Truncation: finds teen, teens, teenager, teenagers.</span>
+        <code>"sleep deprivation"</code><span>Quotation marks search the exact phrase in that order.</span>
+        <code>AND · OR · NOT</code><span>Type the operators in capital letters.</span>
+      </div>
+      <p class="hint" style="margin-top:10px">Most databases use these symbols. If something doesn't work, check the database's Help page.</p>
+    </details>
+    <details>
+      <summary>Results not working?</summary>
+      <div class="fix">
+        <div><h4>Too many results</h4><ul><li>Add another concept with AND</li><li>Use a more specific keyword</li><li>Make a truncation root longer</li><li>Use the date or peer-reviewed filters</li></ul></div>
+        <div><h4>Too few results</h4><ul><li>Add more synonyms with OR</li><li>Truncate more words</li><li>Remove your least important concept</li><li>Take out NOT terms</li></ul></div>
+      </div>
+    </details>
+  </section>
+</div>
+
+<script>
+(function(){
+const KEY='boolbuilder.v1';
+const STOP=new Set(("a an the of in on at to for from by with about and or but is are was were be been being do does did doing how what why when where who whom whose which that this these those there their they them it its as into than then so can could should would will may might must has have had affect affects affected affecting effect effects impact impacts impacted influence influences influenced relate relates related relationship relationships between among role i me my we our us you your more most less least other some any all such way ways").split(' '));
+const EXAMPLE={q:'How does social media use affect sleep quality in teenagers?',sel:['social','media','sleep','teenagers'],joins:['social|media'],extra:[],
+  terms:{'social media':[{t:'social media'},{t:'social networking'},{t:'instagram'},{t:'tiktok'}],
+         'sleep':[{t:'sleep'},{t:'insomnia'},{t:'sleep deprivation'}],
+         'teenagers':[{t:'teenagers',cut:4},{t:'adolescents',cut:9},{t:'teens'},{t:'youth'}]},
+  not:[],example:true};
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+if(!S||typeof S!=='object')S=JSON.parse(JSON.stringify(EXAMPLE));
+let editing=null;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=w=>w.toLowerCase().replace(/[’']/g,"'").replace(/^'+|'+$/g,'');
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+
+function tokens(){return (S.q.match(/[A-Za-z0-9][A-Za-z0-9'’-]*/g)||[])}
+function isSel(w){return S.sel.includes(norm(w))}
+function joined(a,b){return S.joins.includes(norm(a)+'|'+norm(b))}
+
+function concepts(){
+  const tk=tokens(), out=[]; let cur=null;
+  tk.forEach((w,i)=>{
+    if(!isSel(w)){cur=null;return}
+    if(cur&&i>0&&isSel(tk[i-1])&&joined(tk[i-1],w)) cur.push(norm(w));
+    else{cur=[norm(w)];out.push(cur)}
+  });
+  const labels=[];
+  out.forEach(g=>{const l=g.join(' ');if(!labels.includes(l))labels.push(l)});
+  S.extra.forEach(l=>{if(!labels.includes(l))labels.push(l)});
+  labels.forEach(l=>{if(!S.terms[l])S.terms[l]=[{t:l}]});
+  return labels;
+}
+const color=i=>`--c:var(--c${i%5+1});--cbg:var(--c${i%5+1}bg)`;
+
+function rendered(t){let s=t.cut?t.t.slice(0,t.cut)+'*':t.t; if(/\s/.test(s))s='"'+s+'"'; return s}
+function coveredBy(list,i){
+  const b=list[i], bt=b.t.toLowerCase(), bRoot=b.cut?bt.slice(0,b.cut):null;
+  for(let j=0;j<list.length;j++){ if(j===i)continue; const a=list[j];
+    if(rendered(a).toLowerCase()===rendered(b).toLowerCase()&&j<i) return rendered(a);
+    if(!a.cut)continue; const root=a.t.toLowerCase().slice(0,a.cut);
+    if(bRoot){ if(bRoot.startsWith(root)&&(bRoot!==root||j<i)) return rendered(a); }
+    else if(bt.startsWith(root)) return rendered(a);
+  }
+  return null;
+}
+function activeTerms(label){const l=S.terms[label]||[];return l.filter((t,i)=>!coveredBy(l,i))}
+
+function renderTokens(){
+  const tk=tokens(); let h='';
+  const labels=concepts();
+  const colorOf=w=>{const k=norm(w);const idx=labels.findIndex(l=>l.split(' ').includes(k));return idx<0?'':color(idx)};
+  tk.forEach((w,i)=>{
+    const sel=isSel(w), stop=STOP.has(norm(w));
+    if(i>0&&sel&&isSel(tk[i-1])){
+      const on=joined(tk[i-1],w);
+      h+=`<button type="button" class="link${on?' on':''}" style="${colorOf(w)}" data-act="join" data-a="${esc(norm(tk[i-1]))}" data-b="${esc(norm(w))}" aria-label="${on?'Split':'Join'} ${esc(tk[i-1])} and ${esc(w)} ${on?'apart':'into a phrase'}" title="${on?'Split apart':'Join into a phrase'}">${on?'–':'+'}</button>`;
+    }
+    h+=`<button type="button" class="tok${sel?' sel':''}${stop&&!sel?' stop':''}" style="${sel?colorOf(w):''}" data-act="tok" data-w="${esc(norm(w))}" aria-pressed="${sel}">${esc(w)}</button>`;
+  });
+  $('tokens').innerHTML=h||'<p class="empty">Your question will appear here as words you can tap.</p>';
+  let p='';
+  if(labels.length){
+    p+='<div class="chips">'+labels.map((l,i)=>`<span class="chip" style="${color(i)}">${esc(l)}${S.extra.includes(l)?`<button type="button" data-act="rmextra" data-l="${esc(l)}" aria-label="Remove ${esc(l)}">×</button>`:'<span style="width:6px"></span>'}</span>`).join('')+'</div>';
+    if(labels.length>4) p+='<p class="note">That\'s a lot of concepts. Most strong searches use 2 or 3. Each extra AND makes results smaller.</p>';
+    if(labels.length===1) p+='<p class="note">Try to find at least 2 concepts so AND can narrow your results.</p>';
+  }
+  $('pickedWrap').innerHTML=p;
+}
+
+function renderConcepts(){
+  const labels=concepts();
+  if(!labels.length){$('concepts').innerHTML='<p class="empty">Pick keywords in Step 2 and a card for each one will appear here.</p>';return}
+  $('concepts').innerHTML=labels.map((l,ci)=>{
+    const list=S.terms[l];
+    const items=list.map((t,i)=>{
+      const id=l+'::'+i, cov=coveredBy(list,i), ed=editing===id;
+      const r=rendered(t); const shown=t.cut?esc(r.replace('*',''))+'<span class="star">*</span>':esc(r);
+      let x=`<li class="term"><div class="trow"><span class="tt${cov?' covered':''}">${shown}</span>
+        <button type="button" class="ico${ed?' on':''}" data-act="trunc" data-l="${esc(l)}" data-i="${i}" aria-expanded="${ed}">${t.cut?'Edit *':'Truncate'}</button>
+        ${i>0?`<button type="button" class="ico" data-act="rmterm" data-l="${esc(l)}" data-i="${i}" aria-label="Remove ${esc(t.t)}">×</button>`:''}</div>`;
+      if(cov) x+=`<span class="tag">Already found by ${esc(cov)}, so it's left out of the search.</span>`;
+      if(ed){
+        const last=t.t.lastIndexOf(' ')+1;
+        x+='<div class="letters" role="group" aria-label="Pick the last letter of the root">'+[...t.t].map((ch,k)=>{
+          if(ch===' ')return '<span class="gap"></span>';
+          const kept=t.cut&&k<t.cut, cp=t.cut&&k===t.cut-1;
+          return `<button type="button" ${k<last?'disabled':''} class="${kept?'kept':''}${cp?' cutpt':''}" data-act="cut" data-l="${esc(l)}" data-i="${i}" data-k="${k+1}" aria-label="Cut after letter ${k+1}, ${esc(ch)}">${esc(ch)}</button>`;}).join('')+'</div>';
+        let help=t.cut?`<b>${esc(t.t.slice(0,t.cut))}*</b> finds any word starting with “${esc(t.t.slice(last,t.cut))}”.`:'Tap the last letter you want to keep. Everything after it becomes *.';
+        if(t.cut&&t.cut-last<4) help+=' Careful: short roots pull in unrelated words (cat* also finds category).';
+        x+=`<p class="trhelp">${help}</p><div class="row">${t.cut?`<button type="button" class="ico" data-act="cut" data-l="${esc(l)}" data-i="${i}" data-k="0">Remove *</button>`:''}<button type="button" class="ico" data-act="trunc" data-l="${esc(l)}" data-i="${i}">Done</button></div>`;
+      }
+      return x+'</li>';
+    }).join('');
+    const n=activeTerms(l).length;
+    return `<article class="concept" style="${color(ci)}"><header><h3>${esc(l)}</h3><span>${n} term${n===1?'':'s'}</span></header>
+      <ul class="terms">${items}</ul>
+      <form class="add" data-l="${esc(l)}"><input type="text" aria-label="Add a synonym for ${esc(l)}" placeholder="Add a synonym"><button class="btn" type="submit">Add</button></form></article>`;
+  }).join('');
+}
+
+function stringParts(){
+  return concepts().map((l,i)=>{const a=activeTerms(l).map(rendered);return {l,i,a,text:a.join(' OR ')}}).filter(p=>p.a.length);
+}
+const notText=()=>S.not.map(w=>/\s/.test(w)?'"'+w+'"':w).join(' OR ');
+function renderOutput(){
+  const parts=stringParts();
+  if(!parts.length){$('stat').textContent='';$('boxes').innerHTML='<p class="empty">Each concept gets its own search box here.</p>';renderNots();return}
+  const total=parts.reduce((s,p)=>s+p.a.length,0);
+  $('stat').textContent=`${parts.length} concept${parts.length>1?'s':''} · ${total} search terms`;
+  $('boxes').innerHTML=parts.map((p,k)=>(k?'<div class="andsep">AND</div>':'')+`<div class="box" style="${color(p.i)}"><span class="lbl">Box ${k+1}</span><code>${esc(p.text)}</code><button type="button" class="ico" data-act="copybox" data-k="${k}">Copy</button></div>`).join('')
+    +(S.not.length?`<div class="andsep">NOT</div><div class="box" style="--c:var(--muted)"><span class="lbl">Box ${parts.length+1}</span><code>${esc(notText())}</code><button type="button" class="ico" data-act="copynot">Copy</button></div>`:'');
+  renderNots();
+}
+function renderNots(){$('nots').innerHTML=S.not.map((w,i)=>`<span class="chip" style="--c:var(--muted);--cbg:var(--soft)">NOT ${esc(w)}<button type="button" data-act="rmnot" data-i="${i}" aria-label="Remove ${esc(w)}">×</button></span>`).join('')}
+
+function renderAll(){$('exBanner').hidden=!S.example;renderTokens();renderConcepts();renderOutput();save()}
+function touched(){if(S.example){S.example=false}}
+
+async function copy(text,btn,el){
+  const old=btn.textContent;
+  try{await navigator.clipboard.writeText(text);btn.textContent='Copied'}
+  catch(e){ if(el){const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r)} btn.textContent='Selected: press Ctrl+C' }
+  setTimeout(()=>btn.textContent=old,1800);
+}
+
+$('q').value=S.q;
+$('q').addEventListener('input',e=>{S.q=e.target.value;touched();renderAll()});
+$('clearEx').addEventListener('click',()=>{S={q:'',sel:[],joins:[],extra:[],terms:{},not:[],example:false};editing=null;$('q').value='';renderAll();$('q').focus()});
+function addConcept(){const v=$('newConcept').value.trim().toLowerCase().replace(/\s+/g,' ');if(!v)return;if(!S.extra.includes(v))S.extra.push(v);$('newConcept').value='';touched();renderAll()}
+$('addConceptBtn').addEventListener('click',addConcept);
+$('newConcept').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addConcept()}});
+function addNot(){const v=$('newNot').value.trim().toLowerCase();if(!v)return;if(!S.not.includes(v))S.not.push(v);$('newNot').value='';touched();renderAll()}
+$('addNot').addEventListener('click',addNot);
+$('newNot').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addNot()}});
+
+document.addEventListener('submit',e=>{
+  const f=e.target.closest('form.add'); if(!f)return; e.preventDefault();
+  const l=f.dataset.l, inp=f.querySelector('input'), v=inp.value.trim().replace(/\s+/g,' ');
+  if(v&&!S.terms[l].some(t=>t.t.toLowerCase()===v.toLowerCase())) S.terms[l].push({t:v});
+  touched();renderAll();
+  const again=[...document.querySelectorAll('form.add')].find(x=>x.dataset.l===l); if(again)again.querySelector('input').focus();
+});
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b)return; const d=b.dataset;
+  switch(d.act){
+    case 'tok':{const i=S.sel.indexOf(d.w); if(i<0)S.sel.push(d.w); else {S.sel.splice(i,1);S.joins=S.joins.filter(j=>!j.split('|').includes(d.w))} break}
+    case 'join':{const k=d.a+'|'+d.b,i=S.joins.indexOf(k); if(i<0)S.joins.push(k); else S.joins.splice(i,1); break}
+    case 'rmextra':S.extra=S.extra.filter(x=>x!==d.l);break;
+    case 'trunc':{const id=d.l+'::'+d.i; editing=editing===id?null:id; break}
+    case 'cut':{const t=S.terms[d.l][+d.i]; if(+d.k)t.cut=+d.k; else delete t.cut; break}
+    case 'rmterm':S.terms[d.l].splice(+d.i,1);editing=null;break;
+    case 'rmnot':S.not.splice(+d.i,1);break;
+    case 'copybox':{const p=stringParts()[+d.k]; if(p)copy(p.text,b,b.previousElementSibling); return}
+    case 'copynot':copy(notText(),b,b.previousElementSibling);return;
+    default:return;
+  }
+  touched();
+  const focusKey=b.getAttribute('aria-label')||b.textContent;
+  renderAll();
+  if(d.act==='cut'||d.act==='trunc'){const nb=[...document.querySelectorAll(`[data-act="${d.act}"][data-l="${CSS.escape(d.l)}"][data-i="${d.i}"]`)].find(x=>(x.getAttribute('aria-label')||x.textContent)===focusKey);if(nb)nb.focus()}
+  else if(d.act==='tok'){const nb=document.querySelector(`[data-act="tok"][data-w="${CSS.escape(d.w)}"]`);if(nb)nb.focus()}
+});
+
+renderAll();
+})();
+</script>
+</body>
+</html>
